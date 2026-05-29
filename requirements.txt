@@ -1,0 +1,8 @@
+pandas>=1.0
+scipy>=1.5
+scikit-learn>=0.23
+openpyxl>=3.0
+matplotlib>=3.2
+seaborn>=0.10
+joblib>=0.16
+PyYAML>=5.3
