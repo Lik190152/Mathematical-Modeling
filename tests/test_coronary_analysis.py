@@ -1,6 +1,7 @@
 import tempfile
 from pathlib import Path
 import math
+import subprocess
 import unittest
 
 import numpy as np
@@ -132,6 +133,60 @@ class PipelineTests(unittest.TestCase):
             write_analysis_outputs(sample, out_dir)
             self.assertTrue((out_dir / "tables" / "basic_structure_stats.csv").exists())
             self.assertTrue((out_dir / "tables" / "lesion_candidates.csv").exists())
+
+
+class LauncherTests(unittest.TestCase):
+    def test_root_batch_launcher_supports_dry_run(self):
+        script = Path(__file__).resolve().parent.parent / "run_analysis.bat"
+        self.assertTrue(script.exists(), "run_analysis.bat should exist in workspace root")
+        root_launcher = (Path(__file__).resolve().parent.parent / "run.bat").read_text(encoding="utf-8")
+        self.assertNotIn('set "PYTHON_EXE=D:\\Anaconda3\\python.exe"', root_launcher)
+        result = subprocess.run(
+            ["cmd", "/c", str(script), "--dry-run"],
+            cwd=str(script.parent),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("tools\\run_coronary_analysis.py", result.stdout)
+
+
+class RequirementsTests(unittest.TestCase):
+    def test_requirements_file_lists_runtime_dependencies(self):
+        requirements = Path(__file__).resolve().parent.parent / "requirements.txt"
+        self.assertTrue(requirements.exists(), "requirements.txt should exist in workspace root")
+        text = requirements.read_text(encoding="utf-8")
+        for package in [
+            "numpy==1.18.5",
+            "scipy==1.5.0",
+            "scikit-image==0.16.2",
+            "networkx==2.4",
+            "matplotlib==3.2.2",
+            "pandas==1.0.5",
+        ]:
+            self.assertIn(package, text)
+
+
+class ReadmeTests(unittest.TestCase):
+    def test_readme_exists_with_reproduction_instructions(self):
+        readme = Path(__file__).resolve().parent.parent / "README.md"
+        self.assertTrue(readme.exists(), "README.md should exist in workspace root")
+        text = readme.read_text(encoding="utf-8")
+        for snippet in [
+            "pip install -r requirements.txt",
+            "run_analysis.bat",
+            "tools/run_coronary_analysis.py",
+            "analysis_results",
+            "manuscript",
+            "--dry-run",
+            "--no-pause",
+            "只打印",
+            "不真正执行",
+            "执行完整分析",
+            "执行结束后不暂停",
+        ]:
+            self.assertIn(snippet, text)
 
 
 if __name__ == "__main__":
